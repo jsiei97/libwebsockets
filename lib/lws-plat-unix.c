@@ -1,5 +1,8 @@
 #include "private-libwebsockets.h"
 
+#include <pwd.h>
+#include <grp.h>
+
 /*
  * included from libwebsockets.c for unix builds
  */
@@ -250,12 +253,22 @@ lws_plat_set_socket_options(struct libwebsocket_context *context, int fd)
 LWS_VISIBLE void
 lws_plat_drop_app_privileges(struct lws_context_creation_info *info)
 {
+	if (info->uid != -1) {
+		struct passwd *p = getpwuid(info->uid);
+
+		if (p) {
+			initgroups(p->pw_name, info->gid);
+			if (setuid(info->uid))
+				lwsl_warn("setuid: %s\n", strerror(LWS_ERRNO));
+			else
+				lwsl_notice(" Set privs to user '%s'\n", p->pw_name);
+		} else
+			lwsl_warn("getpwuid: unable to find uid %d", info->uid);
+	}
 	if (info->gid != -1)
 		if (setgid(info->gid))
 			lwsl_warn("setgid: %s\n", strerror(LWS_ERRNO));
-	if (info->uid != -1)
-		if (setuid(info->uid))
-			lwsl_warn("setuid: %s\n", strerror(LWS_ERRNO));
+
 }
 
 LWS_VISIBLE int
@@ -438,10 +451,8 @@ lws_plat_open_file(const char* filename, unsigned long* filelen)
 	return ret;
 }
 
-#ifdef LWS_USE_IPV6
 LWS_VISIBLE const char *
 lws_plat_inet_ntop(int af, const void *src, char *dst, int cnt)
 {
 	return inet_ntop(af, src, dst, cnt);
 }
-#endif

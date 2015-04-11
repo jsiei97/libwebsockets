@@ -47,9 +47,11 @@
 static int close_testing;
 int max_poll_elements;
 
+#ifdef EXTERNAL_POLL
 struct pollfd *pollfds;
 int *fd_lookup;
 int count_pollfds;
+#endif
 static volatile int force_exit = 0;
 static struct libwebsocket_context *context;
 
@@ -873,7 +875,7 @@ int main(int argc, char **argv)
 	lws_set_log_level(debug_level, lwsl_emit_syslog);
 
 	lwsl_notice("libwebsockets test server - "
-			"(C) Copyright 2010-2014 Andy Green <andy@warmcat.com> - "
+			"(C) Copyright 2010-2015 Andy Green <andy@warmcat.com> - "
 						    "licensed under LGPL2.1\n");
 
 	printf("Using resource path \"%s\"\n", resource_path);

@@ -191,12 +191,14 @@ int lws_http_action(struct libwebsocket_context *context,
 		WSI_TOKEN_HTTP_COLON_PATH,
 #endif
 	};
+#ifdef _DEBUG
 	static const char * const method_names[] = {
 		"GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE",
 #ifdef LWS_USE_HTTP2
 		":path",
 #endif
 	};
+#endif
 	
 	/* it's not websocket.... shall we accept it as http? */
 
@@ -594,6 +596,10 @@ libwebsocket_create_new_server_wsi(struct libwebsocket_context *context)
 	new_wsi->state = WSI_STATE_HTTP;
 	new_wsi->mode = LWS_CONNMODE_HTTP_SERVING;
 	new_wsi->hdr_parsing_completed = 0;
+
+#ifdef LWS_OPENSSL_SUPPORT
+	new_wsi->use_ssl = LWS_SSL_ENABLED(context);
+#endif
 
 	if (lws_allocate_header_table(new_wsi)) {
 		lws_free(new_wsi);

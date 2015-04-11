@@ -337,7 +337,7 @@ int main(int argc, char **argv)
 	lws_set_log_level(debug_level, lwsl_emit_syslog);
 #endif
 	lwsl_notice("libwebsockets echo test - "
-		    "(C) Copyright 2010-2014 Andy Green <andy@warmcat.com> - "
+		    "(C) Copyright 2010-2015 Andy Green <andy@warmcat.com> - "
 		    "licensed under LGPL2.1\n");
 #ifndef LWS_NO_CLIENT
 	if (client) {
@@ -398,11 +398,11 @@ int main(int argc, char **argv)
 			/* we are in client mode */
 		
 			address[sizeof(address) - 1] = '\0';
-			sprintf(ads_port, "%s:%u\n", address, port & 65535);
+			sprintf(ads_port, "%s:%u", address, port & 65535);
 		
 			wsi = libwebsocket_client_connect(context, address,
 				port, use_ssl, uri, ads_port,
-				 "origin", NULL, -1);
+				 ads_port, NULL, -1);
 			if (!wsi) {
 				lwsl_err("Client failed to connect to %s:%u\n", address, port);
 				goto bail;

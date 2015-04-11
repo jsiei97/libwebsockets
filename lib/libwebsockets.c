@@ -52,7 +52,7 @@ libwebsocket_close_and_free_session(struct libwebsocket_context *context,
 
 	old_state = wsi->state;
 
-	if (wsi->socket_is_permanently_unusable)
+	if (wsi->socket_is_permanently_unusable || reason == LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY)
 		goto just_kill_connection;
 
 	switch (old_state) {
@@ -74,6 +74,7 @@ libwebsocket_close_and_free_session(struct libwebsocket_context *context,
 		if (wsi->truncated_send_len) {
 			lwsl_info("wsi %p entering WSI_STATE_FLUSHING_STORED_SEND_BEFORE_CLOSE\n", wsi);
 			wsi->state = WSI_STATE_FLUSHING_STORED_SEND_BEFORE_CLOSE;
+			libwebsocket_set_timeout(wsi, PENDING_FLUSH_STORED_SEND_BEFORE_CLOSE, 5);
 			return;
 		}
 		break;
@@ -164,7 +165,8 @@ libwebsocket_close_and_free_session(struct libwebsocket_context *context,
 	 */
 
 	if (old_state == WSI_STATE_ESTABLISHED &&
-					  reason != LWS_CLOSE_STATUS_NOSTATUS) {
+	    reason != LWS_CLOSE_STATUS_NOSTATUS &&
+	    reason != LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY) {
 
 		lwsl_debug("sending close indication...\n");
 
@@ -235,6 +237,7 @@ just_kill_connection:
 			lws_free2(wsi->u.ws.ping_payload_buf);
 			wsi->u.ws.ping_payload_alloc = 0;
 			wsi->u.ws.ping_payload_len = 0;
+			wsi->u.ws.ping_pending_flag = 0;
 		}
 	}
 
@@ -356,7 +359,7 @@ libwebsockets_get_addresses(struct libwebsocket_context *context,
 	if (!p)
 		return -1;
 
-	inet_ntop(AF_INET, p, rip, rip_len);
+	lws_plat_inet_ntop(AF_INET, p, rip, rip_len);
 
 	return 0;
 }
